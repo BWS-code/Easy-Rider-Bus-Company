@@ -1,52 +1,29 @@
 import json
-import re
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 data = json.loads(input())
-err_dict = defaultdict(int)
+freq_dict = defaultdict(list)
 
-check_list = {
-    'bus_id': {
-        'data': int,
-        'mandatory': True,
-        'format': None
-    },
-    'stop_id': {
-        'data': int,
-        'mandatory': True,
-        'format': None
-    },
-    'stop_name': {
-        'data': str,
-        'mandatory': True,
-        'format': '^[A-Z]\w+\s.*?(Road|Boulevard|Street|Avenue)$'
-    },
-    'next_stop': {
-        'data': int,
-        'mandatory': True,
-        'format': None
-    },
-    'stop_type': {
-        'data': str,
-        'mandatory': False,
-        'format': '^[SOF]?$'
-    },
-    'a_time': {
-        'data': str,
-        'mandatory': True,
-        'format': '^(0\d|1\d|2[0-3]):[0-5]\d$'
-    }
-}
-
+search = 'bus_id'
 for element in data:
     for k, v in element.items():
-        if check_list[k]['format'] and \
-        re.match(check_list[k]['format'], str(v)) is None:
-            err_dict[k] += 1
+        if k == search:
+            freq_dict[k].append(v)
 
-errors = sum(v for v in err_dict.values())
+count = Counter(freq_dict['bus_id'])
 
-print(f'Type and required field validation: {errors} error{"s"[:errors ^ 1]}')
-for check in check_list:
-    if check_list[check]['format']:
-        print(f'{check}: {err_dict[check]}')
+print('Line names and number of stops:')
+for k, v in count.items():
+    print(f'{search}: {k}, stops: {v}')
+    
+------------------OR---------------------
+
+import json
+from collections import defaultdict, Counter
+
+
+data = json.loads(input())
+search = 'bus_id'
+
+count = Counter([v for element in data for k, v in element.items() if k == search])
+print('\n'.join(f'{search}: {k}, stops: {v}' for k, v in count.items()))
