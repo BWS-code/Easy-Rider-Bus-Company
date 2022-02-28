@@ -1,23 +1,23 @@
 import json
+import itertools
+from collections import defaultdict
 
 
 data = json.loads(input())
-time_catches = dict()
 
-last_time = ''
-last_id = data[0]['bus_id']
+streets_buses = defaultdict(set)
 
-for bus_id in {element['bus_id'] for element in data}:
-    for element in data:
-        if element['bus_id'] == bus_id and type(element['a_time']) == str and \
-                    element['a_time'] and element['stop_name']:
-            current_time, current_id = element['a_time'], element['bus_id']
-            if current_id != last_id:
-                last_time = ''
-            if current_time < last_time:
-                time_catches[element['bus_id']] = element['stop_name']
-                break
-            last_time, last_id = current_time, current_id
+for element in data:
+    for k, v in element.items():
+        if k == 'bus_id' and element['stop_name']:
+            streets_buses[element['stop_name']] |= {v}
+T_stop_names = [street for street in streets_buses if len(streets_buses[street]) > 1]
 
-print('\n'.join(('Arrival time test:', *[f'bus_id line {k}: wrong time on station {v}'
-                                         for k, v in time_catches.items()])) if time_catches else 'OK')
+S_F_stop_names = set(element['stop_name'] for element in data if element['stop_type'] in ('S', 'F'))
+O_stop_names = set(element['stop_name'] for element in data if element['stop_type'] == 'O')
+
+on_demand_wrong = [street for street in O_stop_names if street in itertools.chain(S_F_stop_names, T_stop_names)]
+
+print('On demand stops test:')
+print(['OK', 'Wrong stop type:'][len(on_demand_wrong) > 0], end=' ')
+print(sorted(on_demand_wrong))
