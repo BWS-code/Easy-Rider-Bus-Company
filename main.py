@@ -1,30 +1,23 @@
 import json
-import pprint
-from collections import defaultdict
 
 
 data = json.loads(input())
+time_catches = dict()
 
-streets_buses = defaultdict(set)
-buses_types = defaultdict(set)
+last_time = ''
+last_id = data[0]['bus_id']
 
-for element in data:
-    for k, v in element.items():
-        if k == 'bus_id' and element['stop_name']:
-            streets_buses[element['stop_name']] |= {v}
-            buses_types[element[k]] |= {element['stop_type']}
+for bus_id in {element['bus_id'] for element in data}:
+    for element in data:
+        if element['bus_id'] == bus_id and type(element['a_time']) == str and \
+                    element['a_time'] and element['stop_name']:
+            current_time, current_id = element['a_time'], element['bus_id']
+            if current_id != last_id:
+                last_time = ''
+            if current_time < last_time:
+                time_catches[element['bus_id']] = element['stop_name']
+                break
+            last_time, last_id = current_time, current_id
 
-# pprint.pprint(streets_buses, compact=True)
-# pprint.pprint(buses_types, compact=True)
-
-ids_missing_S_or_F = [k for k, v in buses_types.items() for typ in ('S', 'F') if typ not in v]
-
-if ids_missing_S_or_F:
-    print(f'There is no start or end stop for the line: {ids_missing_S_or_F[0]}.')
-else:
-    start_stop_names = set(element['stop_name'] for element in data if element['stop_type'] == 'S')
-    finish_stop_names = set(element['stop_name'] for element in data if element['stop_type'] == 'F')
-    transfer_stop_names = [street for street in streets_buses if len(streets_buses[street]) > 1]
-    print(f'Start stops: {len(start_stop_names)} {sorted(list(start_stop_names))}')
-    print(f'Transfer stops: {len(transfer_stop_names)} {sorted(transfer_stop_names)}')
-    print(f'Finish stops: {len(finish_stop_names)} {sorted(list(finish_stop_names))}')
+print('\n'.join(('Arrival time test:', *[f'bus_id line {k}: wrong time on station {v}'
+                                         for k, v in time_catches.items()])) if time_catches else 'OK')
